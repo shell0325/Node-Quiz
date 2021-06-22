@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>home</title>
+  </head>
+  <script>
+    let index = 0;
+    let quizDifficulty = [];
+    let quizGenre = [];
+    let quizQuestion = [];
+    let quizCorrectAnswers = [];
+    let quizInCorrectAnswers = [];
+    let correctAnswers = [];
+    let correctAnswersNum = [];
+    function startButton() {
+      const startBtn = document.getElementById('button');
+      startBtn.addEventListener('click', () => {
+        startBtn.hidden = true;
+        fetchQuizData(1);
+      });
+    }
+    function judgmentAnswer() {
+      if (correctAnswers[index - 1] === quizCorrectAnswers[index - 1]) {
+        correctAnswersNum.push(correctAnswers[index - 1]);
+      }
+    }
+    function nextQuiz() {
+      const text = document.getElementById('text');
+      const title = document.getElementById('title');
+      const quizCategory = document.getElementById('category');
+      const Difficulty = document.getElementById('difficulty');
+      title.textContent = `問題${index}`;
+      quizCategory.textContent = `【ジャンル】${quizGenre[index]}`;
+      Difficulty.textContent = `【難易度】${quizDifficulty[index]}`;
+      text.textContent = quizQuestion[index];
+      const answers = [
+        quizCorrectAnswers[index],
+        ...quizInCorrectAnswers[index],
+      ];
+      setAnswers();
+    }
+    async function fetchQuizData() {
+      const text = document.getElementById('text');
+      const title = document.getElementById('title');
+      const quizCategory = document.getElementById('category');
+      const Difficulty = document.getElementById('difficulty');
+      title.textContent = '取得中';
+      text.textContent = '少々お待ちください';
+      const response = await fetch('http://localhost:3000/api');
+      const data = await response.json();
+      quizDifficulty = data.quizDifficulty;
+      quizGenre = data.quizGenre;
+      quizQuestion = data.quizQuestion;
+      quizCorrectAnswers = data.quizAnswer;
+      quizInCorrectAnswers = data.quizFaultAnswer;
+      const answers = [
+        quizCorrectAnswers[index],
+        ...quizInCorrectAnswers[index],
+      ];
+      title.textContent = `問題${index + 1}`;
+      quizCategory.textContent = `【ジャンル】${quizGenre[index]}`;
+      Difficulty.textContent = `【難易度】${quizDifficulty[index]}`;
+      text.textContent = quizQuestion[index];
+      setAnswers();
+    }
+    function setAnswers() {
+      const answers = [
+        quizCorrectAnswers[index],
+        ...quizInCorrectAnswers[index],
+      ];
+      const answer = shuffleQuiz(answers);
+      const quizList = document.getElementById('quizList');
+      quizList.textContent = '';
+      answer.forEach((answer) => {
+        const buttonList = document.createElement('li');
+        quizList.appendChild(buttonList);
+        const buttonElement = document.createElement('button');
+        buttonElement.innerHTML = answer;
+        buttonList.appendChild(buttonElement);
+
+        buttonElement.addEventListener('click', () => {
+          index++;
+          correctAnswers.push(answer);
+          judgmentAnswer();
+          setNextQuiz();
+        });
+      });
+    }
+    function finishQuiz() {
+      const text = document.getElementById('text');
+      const title = document.getElementById('title');
+      const quizCategory = document.getElementById('category');
+      const Difficulty = document.getElementById('difficulty');
+      const quizList = document.getElementById('quizList');
+      quizList.textContent = '';
+      title.textContent = `あなたの正答数は${correctAnswersNum.length}です!!`;
+      text.textContent = '再度チャレンジしたい場合は以下をクリック!!';
+      quizCategory.textContent = '';
+      Difficulty.textContent = '';
+      const homeButton = document.createElement('button');
+      homeButton.innerHTML = 'ホームへ戻る';
+      quizList.appendChild(homeButton);
+      homeButton.addEventListener('click', () => {
+        location.reload();
+      });
+    }
+    function setNextQuiz() {
+      if (index < 10) {
+        nextQuiz();
+      } else {
+        finishQuiz();
+      }
+    }
+    function shuffleQuiz([...array]) {
+      for (let i = array.length - 1; i >= 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+      }
+      return array;
+    }
+  </script>
+  <body>
+    <div>
+      <h1 id="title">ようこそ</h1>
+      <p id="category"></p>
+      <p id="difficulty"></p>
+      <hr />
+      <p id="text" class="text">以下のボタンをクリック</p>
+      <hr />
+      <button id="button" onclick="startButton()">開始</button>
+    </div>
+    <div id="quizList"></div>
+  </body>
+</html>
